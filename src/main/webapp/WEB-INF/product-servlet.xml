@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc.xsd
+	">
+	<!-- Required for Transactional annotation, which in turn is required for 
+		Write operations on DB -->
+	<tx:annotation-driven />
+
+	<context:component-scan
+		base-package="productcrud"></context:component-scan>
+
+	<mvc:annotation-driven />
+
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/*" />
+			<bean class="productcrud.MyInterceptor" />
+		</mvc:interceptor>
+
+	</mvc:interceptors>
+
+	<mvc:resources location="/WEB-INF/resources/"
+		mapping="/resources/**" />
+
+	<bean
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource"
+		name="dataSource" p:driverClassName="com.mysql.cj.jdbc.Driver"
+		p:url="jdbc:mysql://localhost:3306/productCrud?createDatabaseIfNotExist=true" p:username="root"
+		p:password="mysql@123" />
+
+	<bean
+		class="org.springframework.orm.hibernate5.LocalSessionFactoryBean"
+		name="factory">
+		<property name="dataSource" ref="dataSource" />
+
+		<property name="annotatedClasses">
+			<list>
+				<value>productcrud.model.Product</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+
+	</bean>
+
+	<bean class="org.springframework.orm.hibernate5.HibernateTemplate"
+		name="hibernateTemplate" p:sessionFactory-ref="factory" />
+
+	<bean class="productcrud.dao.ProductDaoImpl" name="productDaoImpl"
+		p:hibernateTemplate-ref="hibernateTemplate">
+	</bean>
+
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+		p:prefix="/WEB-INF/views/" p:suffix=".jsp" />
+
+	<bean
+		class="org.springframework.orm.hibernate5.HibernateTransactionManager"
+		name="transactionManager"
+		p:sessionFactory-ref="factory" />
+
+</beans>
